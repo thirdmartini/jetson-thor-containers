@@ -1,0 +1,19 @@
+# Containerized YOLO (ultralytics)
+#    https://www.ultralytics.com/
+#  
+# This container installs a working yolo libraries and yolo-cli that can be used on the NVIDIA Thor hardware
+#
+# Build:
+#   docker build -t tools/yolo -f ./Dockerfile.yolo . 
+# Run:
+#  [1] Configure your docker runtime to use the nvidia runtime
+#  [2] Or pass it on the command line:
+#      docker run --gpus all -it --rm -v./:/workspace --runtime nvidia --shm-size=4gb tools/ultralytics
+#
+# Build from a working pytorch container:
+#    You can get the latest versions from https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch
+FROM nvcr.io/nvidia/pytorch:25.09-py3
+
+WORKDIR /workspace
+RUN apt-get update && apt-get install -y libgl1 && pip install 'ultralytics==8.3.207' 'onnxslim==0.1.70' 'onnxruntime==1.23.1'
+
