@@ -1,0 +1,25 @@
+#
+# This is a container for running Qwen3-TTS (https://github.com/QwenLM/Qwen3-TTS)  on Spark/Thor (cuda13) devices.
+#  This container installs a known good version of all dependancies so you don't have to fight dependancy hell
+#
+# Building:
+#   docker build -t tools/qwen3-tts -f ./Dockerfile.qwen3-tts .
+# Run:
+#  [1] Configure your docker runtime to use the nvidia runtime
+#  [2] Or pass it on the command line:
+#      docker run --gpus all -it --rm -v./:/workspace --runtime nvidia --shm-size=4gb tools/qwen3-tts
+#
+# Build from a working pytorch container:
+#    You can get the latest versions from https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch
+#
+FROM nvcr.io/nvidia/pytorch:26.01-py3
+
+WORKDIR /workspace
+
+RUN apt-get update && apt-get install -y libgl1
+# Install specific versions of torch and libratries that are known commpatible
+RUN pip install -U torch==2.10.0+cu130 torchvision==0.25.0+cu130 torchaudio==2.10.0+cu130 --extra-index-url https://download.pytorch.org/whl/cu130
+RUN pip install transformers==4.57.3 gradio==6.5.1 sox==1.5.0  onnxruntime==1.23.2 accelerate==1.12.0
+#
+# Install a known working hash of QwenTTS , you can try newer versions if you like but I know this one worked
+RUN mkdir /build/ && cd /build && git clone https://github.com/QwenLM/Qwen3-TTS && cd Qwen3-TTS && git checkout 1ab0dd75353392f28a0d05d9ca960c9954b13c83 && pip install -e . --no-deps
