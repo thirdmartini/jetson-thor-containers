@@ -7,7 +7,7 @@
 # Run:
 #  [1] Configure your docker runtime to use the nvidia runtime
 #  [2] Or pass it on the command line:
-#      docker run --gpus all -it --rm -v./:/workspace --runtime nvidia --shm-size=4gb tools/qwen3-tts
+#      docker run --gpus all -it --rm -v./:/data --runtime nvidia --shm-size=4gb tools/qwen3-tts
 #
 # Build from a working pytorch container:
 #    You can get the latest versions from https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch

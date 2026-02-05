@@ -1,0 +1,33 @@
+#
+# This is a container for running Qwen3-TTS (https://github.com/QwenLM/Qwen3-TTS)  on Spark/Thor (cuda13) devices.
+#  This container installs a known good version of all dependancies so you don't have to fight dependancy hell
+#  Here we use a base ubuntu image and then install the nvidia/cu dependencies,
+#  You will also need rthe included flash_attn-2.7.4.post1-cp312-cp312-linux_aarch64.whl ( otherwise you need to build your own flash attention)
+#
+# Building:
+#   docker build -t tools/qwen3-tts -f ./Dockerfile.qwen3-tts-small .
+# Run:
+#  [1] Configure your docker runtime to use the nvidia runtime
+#  [2] Or pass it on the command line:
+#      docker run --gpus all -it --rm -v./:/data --runtime nvidia --shm-size=4gb tools/qwen3-tts
+#
+#
+FROM ubuntu:24.04
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install pip git sox -y
+RUN pip install --break-system-packages -U torch==2.10.0+cu130 torchvision==0.25.0+cu130 torchaudio==2.10.0+cu130 --extra-index-url https://download.pytorch.org/whl/cu130
+RUN pip install --break-system-packages transformers==4.57.3 gradio==6.5.1 sox==1.5.0  onnxruntime==1.23.2 accelerate==1.12.0 librosa soundfile einops
+COPY flash_attn-2.7.4.post1-cp312-cp312-linux_aarch64.whl /app/flash_attn-2.7.4.post1-cp312-cp312-linux_aarch64.whl
+RUN pip install --break-system-packages /app/flash_attn-2.7.4.post1-cp312-cp312-linux_aarch64.whl
+
+RUN mkdir /build/ && cd /build && git clone https://github.com/QwenLM/Qwen3-TTS && cd Qwen3-TTS && git checkout 1ab0dd75353392f28a0d05d9ca960c9954b13c83 && pip install --break-system-packages -e . --no-deps
+
+# a really silly  server replace with your own
+COPY server.py /app/server.py
+
+# Set huggingface home so the models go to our external mount poiint ands survive restarts
+ENV HF_HOME=/data
+ENTRYPOINT ["/usr/bin/python3", "/app/server.py"]
+
